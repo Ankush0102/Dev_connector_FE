@@ -1,17 +1,20 @@
 "use client";
 import React, { useState } from "react";
 import { RegisterProps } from "@/types";
-import apiRequest from "@/lib/api";
+import apiRequest from "@/services/api";
 import { USER_REGISTER } from "@/urls";
-// import { useRouter } from "next/navigation";
+import Link from "next/link";
+import axios from "axios";
+import { useRouter } from "next/navigation";
 
 const Register = () => {
-  // const router = useRouter();
+  const router = useRouter();
   const [form, setForm] = useState<RegisterProps>({
     name: "",
     email: "",
     password: "",
   });
+  const [error, setError] = React.useState<string>("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({
@@ -22,12 +25,16 @@ const Register = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     try {
-      const res = await apiRequest.post(USER_REGISTER, form);
-      localStorage.setItem("authToken", res.data.token);
-      // router.push("/dashboard");
-    } catch (err) {
-      console.log(err);
+      await apiRequest.post(USER_REGISTER, form);
+      router.push("/posts");
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err) && err.response) {
+        setError(err.response.data?.msg || "Registration failed");
+      } else {
+        setError("Registration failed");
+      }
     }
   };
 
@@ -41,9 +48,14 @@ const Register = () => {
           Register
         </h2>
         <p className="text-center text-gray-400 text-xs mb-6">
-          Looks like you are first time here, create an account below to
-          start using dev connector.
+          Looks like you are first time here, create an account below to start
+          using dev connector.
         </p>
+        {error && (
+          <p className="text-red-500 text-center mb-4 text-sm font-semibold">
+            {error}
+          </p>
+        )}
         <div>
           <label
             className="block text-gray-500 text-xs font-semibold mb-1"
@@ -95,9 +107,12 @@ const Register = () => {
             required
           />
         </div>
-        <div className="flex justify-end">
+        <div className="flex justify-between">
+          <p className="text-center text-gray-400 text-xs mb-6">
+            Already have an account? <Link href="/login">login</Link>
+          </p>
           <button
-            className="bg-[#4BA9C9] text-white text-xs font-semibold px-4 py-2 rounded"
+            className="bg-[#4BA9C9] text-white text-xs font-semibold px-4 py-2 rounded cursor-pointer"
             type="submit"
           >
             Register
